@@ -1,0 +1,28 @@
+{
+  "name": "openmusic",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afrizafarhan/OpenMusic.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/afrizafarhan/OpenMusic/issues"
+  },
+  "homepage": "https://github.com/afrizafarhan/OpenMusic#readme",
+  "dependencies": {
+    "@hapi/hapi": "^20.2.2",
+    "dotenv": "^16.0.2",
+    "joi": "^17.6.0",
+    "nanoid": "^4.0.0",
+    "node-pg-migrate": "^6.2.2",
+    "pg": "^8.8.0"
+  }
+}
