@@ -122,7 +122,6 @@ class SongsHandler {
           status: 'fail',
           message: error.message,
         });
-        console.log(error);
         response.code(error.statusCode);
         return response;
       }

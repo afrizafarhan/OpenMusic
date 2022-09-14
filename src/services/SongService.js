@@ -46,7 +46,6 @@ class SongService {
     }
 
     const text = `SELECT * FROM songs${condition || ''}`;
-    console.log(text);
     const result = await this._pool.query(text);
 
     return result.rows.map(mapSongDBToModel);
