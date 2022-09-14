@@ -13,34 +13,38 @@ const SongService = require('./services/SongService');
 const SongValidator = require('./validator/songs');
 
 const init = async () => {
-  const albumService = new AlbumService();
-  const songService = new SongService();
-  const server = Hapi.server({
-    port: process.env.PORT,
-    host: process.env.HOST,
-    routes: {
-      cors: {
-        origin: ['*'],
+  try {
+    const albumService = new AlbumService();
+    const songService = new SongService();
+    const server = Hapi.server({
+      port: process.env.PORT,
+      host: process.env.HOST,
+      routes: {
+        cors: {
+          origin: ['*'],
+        },
       },
-    },
-  });
-  await server.register([
-    {
-      plugin: albums,
-      options: {
-        service: albumService,
-        validator: AlbumValidator,
+    });
+    await server.register([
+      {
+        plugin: albums,
+        options: {
+          service: albumService,
+          validator: AlbumValidator,
+        },
       },
-    },
-    {
-      plugin: songs,
-      options: {
-        service: songService,
-        validator: SongValidator,
+      {
+        plugin: songs,
+        options: {
+          service: songService,
+          validator: SongValidator,
+        },
       },
-    },
-  ]);
-  await server.start();
+    ]);
+    await server.start();
+  } catch (e) {
+    console.error(e)
+  }
 };
 
 init();

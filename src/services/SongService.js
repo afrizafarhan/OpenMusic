@@ -21,8 +21,8 @@ class SongService {
     const id = `song-${nanoid(16)}`;
 
     const query = {
-      command: 'INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7) RETURN id',
-      values: [id, title, year, genre, performer, duration, albumId],
+      text: 'INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      values: [id, title, year, performer, genre, duration, albumId],
     };
 
     const result = await this._pool.query(query);
@@ -31,29 +31,30 @@ class SongService {
       throw new InvariantError('Lagu gagal ditambahkan');
     }
 
-    return result;
+    return result.rows[0].id;
   }
 
   async getSongs({ title, performer }) {
     let condition;
 
     if (title && performer) {
-      condition = ` WHERE title like %${title}% AND performer like %${performer}%`;
+      condition = ` WHERE lower(title) like '%${title.toLowerCase()}%' AND lower(performer) like '%${performer.toLowerCase()}%'`;
     } else if (title) {
-      condition = ` WHERE title like %${title}%`;
+      condition = ` WHERE lower(title) like '%${title.toLowerCase()}%'`;
     } else if (performer) {
-      condition = ` WHERE performer like %${performer}%`;
+      condition = ` WHERE lower(performer) like '%${performer.toLowerCase()}%'`;
     }
 
-    const command = `SELECT id, title, year, genre, performer, duration, albumId FROM songs${condition || ''}`;
-    const result = await this._pool.query(command);
+    const text = `SELECT * FROM songs${condition || ''}`;
+    console.log(text);
+    const result = await this._pool.query(text);
 
     return result.rows.map(mapSongDBToModel);
   }
 
   async getSongById(id) {
     const query = {
-      command: 'SELECT id, title, year, genre, performer, duration, albumId FROM songs WHERE id = $1',
+      text: 'SELECT * FROM songs WHERE id = $1',
       values: [id],
     };
 
@@ -66,7 +67,7 @@ class SongService {
     return result.rows.map(mapSongDetailDBToModel)[0];
   }
 
-  async editSong(id, {
+  async editSongById(id, {
     title,
     year,
     genre,
@@ -74,9 +75,11 @@ class SongService {
     duration,
     albumId,
   }) {
+    const updatedAt = new Date().toISOString();
+    
     const query = {
-      command: 'UPDATE songs SET title = $1, year = $2, genre = $3, performer = $4, duration = $5, albumId = $6 WHERE id = $7',
-      values: [title, year, genre, performer, duration, albumId, id],
+      text: 'UPDATE songs SET title = $1, year = $2, genre = $3, performer = $4, duration = $5, album_id = $6, updated_at = $7 WHERE id = $8 RETURNING id',
+      values: [title, year, genre, performer, duration, albumId, updatedAt, id],
     };
 
     const result = await this._pool.query(query);
@@ -86,13 +89,13 @@ class SongService {
     }
   }
 
-  async deleteSong(id) {
+  async deleteSongById(id) {
     const query = {
-      command: 'DELETE FROM songs WHERE id = $1',
+      text: 'DELETE FROM songs WHERE id = $1 RETURNING id',
       values: [id],
     };
 
-    const result = this._pool.query(query);
+    const result = await this._pool.query(query);
 
     if (!result.rows.length) {
       throw new NotFoundError('Lagu gagal dihapus. Id tidak ditemukan');

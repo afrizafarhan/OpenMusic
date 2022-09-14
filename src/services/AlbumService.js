@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../exceptions/InvariantError');
 const NotFoundError = require('../exceptions/NotFoundError');
-const { mapAlbumDBToModel } = require('../utils/mapDBToModel');
+const { mapAlbumDBToModel, mapSongDBToModel } = require('../utils/mapDBToModel');
 
 class AlbumService {
   constructor() {
@@ -14,7 +14,7 @@ class AlbumService {
     const id = `album-${nanoid(16)}`;
 
     const query = {
-      command: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',
+      text: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',
       values: [id, name, year],
     };
 
@@ -24,36 +24,42 @@ class AlbumService {
       throw new InvariantError('Album gagal ditambahkan');
     }
 
-    return result;
+    return result.rows[0].id;
   }
 
   async getAlbumById(id) {
     const query = {
-      command: 'SELECT id, name, year FROM albums WHERE id = $1',
+      text: 'SELECT * FROM albums WHERE id = $1',
       values: [id],
     };
 
     const querySong = {
-      command: 'SELECT id, title, performer FROM songs WHERE id = $1',
+      text: 'SELECT * FROM songs WHERE album_id = $1',
       values: [id],
     }
 
-    const result = await this._pool.query(query);
+    const albums = await this._pool.query(query);
     
-    if (!result.rows.length) {
+    if (!albums.rows.length) {
       throw new NotFoundError('Album tidak ditemukan');
     }
     
     const songs = await this._pool.query(querySong);
-
-    return result.rows.map(mapAlbumDBToModel)[0];
+  
+    const result = albums.rows.map(mapAlbumDBToModel)[0];
+    
+    if (songs.rows.length) {
+      result['songs'] = songs.rows.map(mapSongDBToModel);
+    }
+    
+    return result;
   }
 
   async editAlbumById(id, { name, year }) {
     const updatedAt = new Date().toISOString();
 
     const query = {
-      command: 'UPDATE albums SET name = $1, year = $2 updatedAt = $3 WHERE id = $4',
+      text: 'UPDATE albums SET name = $1, year = $2, updated_at = $3 WHERE id = $4 RETURNING id',
       values: [name, year, updatedAt, id],
     };
 
@@ -66,7 +72,7 @@ class AlbumService {
 
   async deleteAlbumById(id) {
     const query = {
-      command: 'DELETE FROM albums WHERE id = $1 RETURNING id',
+      text: 'DELETE FROM albums WHERE id = $1 RETURNING id',
       values: [id],
     };
 
