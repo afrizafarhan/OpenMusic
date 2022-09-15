@@ -43,7 +43,7 @@ const init = async () => {
     ]);
     await server.start();
   } catch (e) {
-    console.error(e)
+    console.error(e);
   }
 };
 

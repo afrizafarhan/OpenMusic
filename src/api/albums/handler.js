@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 const ClientError = require('../../exceptions/ClientError');
 
 class AlbumsHandler {
@@ -9,6 +10,7 @@ class AlbumsHandler {
     this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this);
     this.deleteAlbumByIdHandler = this.deleteAlbumByIdHandler.bind(this);
   }
+
   async postAlbumHandler(request, h) {
     try {
       this._validator.validateAlbumPayload(request.payload);
@@ -44,6 +46,7 @@ class AlbumsHandler {
       return response;
     }
   }
+
   async getAlbumByIdHandler(request, h) {
     try {
       const { id } = request.params;
@@ -74,10 +77,11 @@ class AlbumsHandler {
       return response;
     }
   }
+
   async putAlbumByIdHandler(request, h) {
     try {
       this._validator.validateAlbumPayload(request.payload);
-      const {id} = request.params;
+      const { id } = request.params;
 
       await this._service.editAlbumById(id, request.payload);
 
@@ -105,6 +109,7 @@ class AlbumsHandler {
       return response;
     }
   }
+
   async deleteAlbumByIdHandler(request, h) {
     try {
       const { id } = request.params;

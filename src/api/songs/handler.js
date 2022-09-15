@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 const ClientError = require('../../exceptions/ClientError');
 
 class SongsHandler {
@@ -10,6 +11,7 @@ class SongsHandler {
     this.putSongByIdHandler = this.putSongByIdHandler.bind(this);
     this.deleteSongByIdHandler = this.deleteSongByIdHandler.bind(this);
   }
+
   async postSongHandler(request, h) {
     try {
       this._validator.validateSongPayload(request.payload);
@@ -45,6 +47,7 @@ class SongsHandler {
       return response;
     }
   }
+
   async getSongsHandler(request, h) {
     try {
       const { title, performer } = request.query;
@@ -75,6 +78,7 @@ class SongsHandler {
       return response;
     }
   }
+
   async getSongByIdHandler(request, h) {
     try {
       const { id } = request.params;
@@ -105,6 +109,7 @@ class SongsHandler {
       return response;
     }
   }
+
   async putSongByIdHandler(request, h) {
     try {
       this._validator.validateSongPayload(request.payload);
@@ -136,6 +141,7 @@ class SongsHandler {
       return response;
     }
   }
+
   async deleteSongByIdHandler(request, h) {
     try {
       const { id } = request.params;
