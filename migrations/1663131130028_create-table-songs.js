@@ -25,7 +25,7 @@ exports.up = (pgm) => {
       type: 'SMALLINT',
       notNull: false,
     },
-    album_id: {
+    albumId: {
       type: 'VARCHAR(50)',
       notNull: false,
       references: '"albums"',

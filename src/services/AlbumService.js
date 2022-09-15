@@ -34,7 +34,7 @@ class AlbumService {
     };
 
     const querySong = {
-      text: 'SELECT * FROM songs WHERE album_id = $1',
+      text: 'SELECT * FROM songs WHERE "albumId" = $1',
       values: [id],
     };
 
