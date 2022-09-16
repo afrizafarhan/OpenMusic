@@ -11,6 +11,7 @@ const AlbumValidator = require('./validator/albums');
 const songs = require('./api/songs');
 const SongService = require('./services/SongService');
 const SongValidator = require('./validator/songs');
+const ClientError = require('./exceptions/ClientError');
 
 const init = async () => {
   try {
@@ -42,6 +43,20 @@ const init = async () => {
       },
     ]);
     await server.start();
+    server.ext('onPreResponse', (request, h) => {
+      const { response } = request;
+
+      if (response instanceof ClientError) {
+        const newResponse = h.response({
+          status: 'fail',
+          message: response.message,
+        });
+        newResponse.code(response.statusCode);
+        return newResponse;
+      }
+
+      return response.continue || response;
+    });
   } catch (e) {
     console.error(e);
   }

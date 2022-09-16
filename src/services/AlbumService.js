@@ -40,7 +40,7 @@ class AlbumService {
 
     const albums = await this._pool.query(query);
 
-    if (!albums.rows.length) {
+    if (!albums.rowCount) {
       throw new NotFoundError('Album tidak ditemukan');
     }
 
@@ -48,7 +48,7 @@ class AlbumService {
 
     const result = albums.rows.map(mapAlbumDBToModel)[0];
 
-    if (songs.rows.length) {
+    if (songs.rowCount) {
       result.songs = songs.rows.map(mapSongDBToModel);
     }
 
@@ -65,7 +65,7 @@ class AlbumService {
 
     const result = await this._pool.query(query);
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Gagal memperbarui album, Id tidak ditemukan');
     }
   }
@@ -78,7 +78,7 @@ class AlbumService {
 
     const result = await this._pool.query(query);
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan');
     }
   }
