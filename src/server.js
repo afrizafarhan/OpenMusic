@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
+const Jwt = require('@hapi/jwt');
 
 // albums
 const albums = require('./api/albums');
@@ -39,8 +40,13 @@ const init = async () => {
         },
       },
     });
+    await server.register([
+      {
+        plugin: Jwt,
+      },
+    ]);
     server.auth.strategy('openmusic_jwt', 'jwt', {
-      key: process.env.ACCESS_TOKEN_KEY,
+      keys: process.env.ACCESS_TOKEN_KEY,
       verify: {
         aud: false,
         iss: false,
@@ -81,8 +87,8 @@ const init = async () => {
         options: {
           authenticationsService,
           usersService,
+          tokenManager: TokenManager,
           validator: AuthenticationsValidator,
-          tokenManger: TokenManager,
         },
       },
     ]);
@@ -98,6 +104,8 @@ const init = async () => {
         newResponse.code(response.statusCode);
         return newResponse;
       }
+
+      console.log(response);
 
       return response.continue || response;
     });

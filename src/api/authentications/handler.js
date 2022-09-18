@@ -6,6 +6,8 @@ class AuthenticationsHandler {
     this._validator = validator;
 
     this.postAuthenticationHandler = this.postAuthenticationHandler.bind(this);
+    this.putAuthenticationHandler = this.putAuthenticationHandler.bind(this);
+    this.deleteAuthenticationHandler = this.deleteAuthenticationHandler.bind(this);
   }
 
   async postAuthenticationHandler(request, h) {
@@ -15,7 +17,7 @@ class AuthenticationsHandler {
     const accessToken = await this._tokenManager.generateAccessToken({ id });
     const refreshToken = await this._tokenManager.generateRefreshToken({ id });
 
-    await this._authenticationsService.addRefreshToken(accessToken, refreshToken);
+    await this._authenticationsService.addRefreshToken(refreshToken);
 
     const response = h.response({
       status: 'success',
@@ -31,7 +33,7 @@ class AuthenticationsHandler {
   async putAuthenticationHandler(request) {
     this._validator.validateTokenAuthenticationPayload(request.payload);
     const { refreshToken } = request.payload;
-    await this._authenticationsService.verifyUserCredential(refreshToken);
+    await this._authenticationsService.verifyRefreshToken(refreshToken);
 
     const id = await this._tokenManager.verifyRefreshToken(refreshToken);
 
@@ -45,7 +47,7 @@ class AuthenticationsHandler {
   async deleteAuthenticationHandler(request) {
     this._validator.validateTokenAuthenticationPayload(request.payload);
     const { refreshToken } = request.payload;
-    await this._authenticationsService(refreshToken);
+    await this._authenticationsService.deleteRefreshToken(refreshToken);
     return {
       status: 'success',
       message: 'Refresh token berhasil dihapus',

@@ -3,7 +3,7 @@ class UsersHandler {
     this._service = service;
     this._validator = validator;
 
-    this.postUsersHandler = this.postUsersHandler.bind(this);
+    this.postUserHandler = this.postUserHandler.bind(this);
   }
 
   async postUserHandler(request, h) {

@@ -1,11 +1,11 @@
 const Joi = require('joi');
 
-const PostAuthenticationsPayloadSchema = Joi.schema({
-  username: Joi.string().min(6).max(20).required(),
-  password: Joi.string().min(6).max(20).required(),
+const PostAuthenticationsPayloadSchema = Joi.object({
+  username: Joi.string().required(),
+  password: Joi.string().required(),
 });
 
-const TokenAuthenticationSchema = Joi.schema({
+const TokenAuthenticationSchema = Joi.object({
   refreshToken: Joi.string().required(),
 });
 
