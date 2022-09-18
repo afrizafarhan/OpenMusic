@@ -13,10 +13,23 @@ const SongService = require('./services/SongService');
 const SongValidator = require('./validator/songs');
 const ClientError = require('./exceptions/ClientError');
 
+// users
+const users = require('./api/users');
+const UsersService = require('./services/UsersService');
+const UsersValidator = require('./validator/users');
+
+// authentications
+const authentications = require('./api/authentications');
+const AuthenticationsService = require('./services/AuthenticationsService');
+const AuthenticationsValidator = require('./validator/authentications');
+const TokenManager = require('./tokenize/TokenManager');
+
 const init = async () => {
   try {
     const albumService = new AlbumService();
     const songService = new SongService();
+    const usersService = new UsersService();
+    const authenticationsService = new AuthenticationsService();
     const server = Hapi.server({
       port: process.env.PORT,
       host: process.env.HOST,
@@ -25,6 +38,21 @@ const init = async () => {
           origin: ['*'],
         },
       },
+    });
+    server.auth.strategy('openmusic_jwt', 'jwt', {
+      key: process.env.ACCESS_TOKEN_KEY,
+      verify: {
+        aud: false,
+        iss: false,
+        sub: false,
+        maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+      },
+      validate: (artifacts) => ({
+        isValid: true,
+        credentials: {
+          id: artifacts.decoded.payload.id,
+        },
+      }),
     });
     await server.register([
       {
@@ -39,6 +67,22 @@ const init = async () => {
         options: {
           service: songService,
           validator: SongValidator,
+        },
+      },
+      {
+        plugin: users,
+        options: {
+          service: usersService,
+          validator: UsersValidator,
+        },
+      },
+      {
+        plugin: authentications,
+        options: {
+          authenticationsService,
+          usersService,
+          validator: AuthenticationsValidator,
+          tokenManger: TokenManager,
         },
       },
     ]);
