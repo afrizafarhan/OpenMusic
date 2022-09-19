@@ -30,7 +30,7 @@ class PlaylistsHandler {
     const { id: credentialId } = request.auth.credentials;
     const { id } = request.params;
 
-    await this._playlistService.verifyOwnerPlaylist(id, credentialId);
+    await this._playlistService.verifyCollaboratorPlaylist(id, credentialId);
     await this._songService.verifySongExist(request.payload);
 
     await this._playlistSongService.addSongToPlaylist(id, request.payload);
@@ -52,7 +52,7 @@ class PlaylistsHandler {
   async getSongInPlaylistHandler(request) {
     const { id: credentialId } = request.auth.credentials;
     const { id } = request.params;
-    await this._playlistService.verifyOwnerPlaylist(id, credentialId);
+    await this._playlistService.verifyCollaboratorPlaylist(id, credentialId);
     const playlist = await this._playlistSongService.getSongsInPlaylistById(id);
     return {
       status: 'success',
@@ -76,7 +76,7 @@ class PlaylistsHandler {
   async deleteSongInPlaylistHandler(request) {
     const { id: credentialId } = request.auth.credentials;
     const { id } = request.params;
-    await this._playlistService.verifyOwnerPlaylist(id, credentialId);
+    await this._playlistService.verifyCollaboratorPlaylist(id, credentialId);
     await this._playlistSongService.deleteSongInPlaylistById(id, request.payload);
     return {
       status: 'success',
