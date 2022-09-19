@@ -11,7 +11,6 @@ exports.up = (pgm) => {
     username: {
       type: 'VARCHAR(50)',
       notNull: true,
-      constraint: 'UNIQUE',
     },
     password: {
       type: 'VARCHAR(100)',
@@ -32,6 +31,7 @@ exports.up = (pgm) => {
       default: pgm.func('current_timestamp'),
     },
   });
+  pgm.addConstraint('users', 'unique.username', 'UNIQUE(username)');
 };
 
 exports.down = (pgm) => {
