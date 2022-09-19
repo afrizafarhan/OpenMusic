@@ -77,7 +77,7 @@ class PlaylistsService {
       throw new NotFoundError('Playlist tidak ditemukan');
     }
     const playlist = result.rows[0];
-    if (playlist.userId !== userId) {
+    if (playlist.owner !== userId) {
       const queryCollaborator = {
         text: 'SELECT id FROM collaborations WHERE playlist_id = $1 AND user_id = $2',
         values: [playlist.id, userId],

@@ -1,9 +1,10 @@
 class PlaylistsHandler {
-  constructor(playlistService, playlistSongService, songService, validator) {
+  constructor(playlistService, playlistSongService, songService, psActivitiesService, validator) {
     this._playlistService = playlistService;
     this._playlistSongService = playlistSongService;
     this._validator = validator;
     this._songService = songService;
+    this._psActivitiesService = psActivitiesService;
 
     this.postPlaylistHandler = this.postPlaylistHandler.bind(this);
     this.postSongToPlaylistHandler = this.postSongToPlaylistHandler.bind(this);
@@ -11,6 +12,7 @@ class PlaylistsHandler {
     this.getSongInPlaylistHandler = this.getSongInPlaylistHandler.bind(this);
     this.deleteSongInPlaylistHandler = this.deleteSongInPlaylistHandler.bind(this);
     this.deletePlaylistHandler = this.deletePlaylistHandler.bind(this);
+    this.getPlaylistActivitiesByIdHandler = this.getPlaylistActivitiesByIdHandler.bind(this);
   }
 
   async postPlaylistHandler(request, h) {
@@ -29,11 +31,12 @@ class PlaylistsHandler {
 
     const { id: credentialId } = request.auth.credentials;
     const { id } = request.params;
-
+    const { songId } = request.payload;
+    await this._songService.getSongById(songId);
     await this._playlistService.verifyCollaboratorPlaylist(id, credentialId);
-    await this._songService.verifySongExist(request.payload);
 
     await this._playlistSongService.addSongToPlaylist(id, request.payload);
+    this._psActivitiesService.addPlaylistSongActivities(id, songId, credentialId, 'add');
     return h.response({
       status: 'success',
       message: 'Berhasil memasukan lagu kedalam playlists',
@@ -76,11 +79,27 @@ class PlaylistsHandler {
   async deleteSongInPlaylistHandler(request) {
     const { id: credentialId } = request.auth.credentials;
     const { id } = request.params;
+    const { songId } = request.payload;
     await this._playlistService.verifyCollaboratorPlaylist(id, credentialId);
     await this._playlistSongService.deleteSongInPlaylistById(id, request.payload);
+    this._psActivitiesService.addPlaylistSongActivities(id, songId, credentialId, 'delete');
     return {
       status: 'success',
       message: 'Berhasil menghapus lagu dari playlist',
+    };
+  }
+
+  async getPlaylistActivitiesByIdHandler(request) {
+    const { id: credentialId } = request.auth.credentials;
+    const { id: playlistId } = request.params;
+    await this._playlistService.verifyCollaboratorPlaylist(playlistId, credentialId);
+    const activities = await this._psActivitiesService.getPlaylistActivitiesById(playlistId);
+    return {
+      status: 'success',
+      data: {
+        playlistId,
+        activities,
+      },
     };
   }
 }
