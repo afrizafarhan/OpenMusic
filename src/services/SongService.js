@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../exceptions/InvariantError');
 const NotFoundError = require('../exceptions/NotFoundError');
-const { mapSongDetailDBToModel, mapSongDBToModel } = require('../utils/mapDBToModel');
+const { mapSongDetailDBToModel } = require('../utils/mapDBToModel');
 
 class SongService {
   constructor() {
@@ -34,21 +34,13 @@ class SongService {
     return result.rows[0].id;
   }
 
-  async getSongs({ title, performer }) {
-    let condition;
-
-    if (title && performer) {
-      condition = ` WHERE lower(title) like '%${title.toLowerCase()}%' AND lower(performer) like '%${performer.toLowerCase()}%'`;
-    } else if (title) {
-      condition = ` WHERE lower(title) like '%${title.toLowerCase()}%'`;
-    } else if (performer) {
-      condition = ` WHERE lower(performer) like '%${performer.toLowerCase()}%'`;
-    }
-
-    const text = `SELECT * FROM songs${condition || ''}`;
-    const result = await this._pool.query(text);
-
-    return result.rows.map(mapSongDBToModel);
+  async getSongs(title = '', performer = '') {
+    const query = {
+      text: 'SELECT id, title, performer FROM songs WHERE title ILIKE $1 and performer ILIKE $2',
+      values: [`%${title}%`, `%${performer}%`],
+    };
+    const { rows } = await this._pool.query(query);
+    return rows;
   }
 
   async getSongById(id) {

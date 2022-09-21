@@ -38,113 +38,109 @@ const CollaborationsService = require('./services/CollaborationsService');
 const CollaborationsValidator = require('./validator/collaborations');
 
 const init = async () => {
-  try {
-    const albumService = new AlbumService();
-    const songService = new SongService();
-    const usersService = new UsersService();
-    const authenticationsService = new AuthenticationsService();
-    const playlistsService = new PlaylistsService();
-    const playlistSongsService = new PlaylistSongsService();
-    const collaborationsService = new CollaborationsService();
-    const psActivitiesService = new PlaylistSongActivitiesService();
+  const albumService = new AlbumService();
+  const songService = new SongService();
+  const usersService = new UsersService();
+  const authenticationsService = new AuthenticationsService();
+  const playlistsService = new PlaylistsService();
+  const playlistSongsService = new PlaylistSongsService();
+  const collaborationsService = new CollaborationsService();
+  const psActivitiesService = new PlaylistSongActivitiesService();
 
-    const server = Hapi.server({
-      port: process.env.PORT,
-      host: process.env.HOST,
-      routes: {
-        cors: {
-          origin: ['*'],
-        },
+  const server = Hapi.server({
+    port: process.env.PORT,
+    host: process.env.HOST,
+    routes: {
+      cors: {
+        origin: ['*'],
       },
-    });
-    await server.register([
-      {
-        plugin: Jwt,
+    },
+  });
+  await server.register([
+    {
+      plugin: Jwt,
+    },
+  ]);
+  server.auth.strategy('openmusic_jwt', 'jwt', {
+    keys: process.env.ACCESS_TOKEN_KEY,
+    verify: {
+      aud: false,
+      iss: false,
+      sub: false,
+      maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+    },
+    validate: (artifacts) => ({
+      isValid: true,
+      credentials: {
+        id: artifacts.decoded.payload.id,
       },
-    ]);
-    server.auth.strategy('openmusic_jwt', 'jwt', {
-      keys: process.env.ACCESS_TOKEN_KEY,
-      verify: {
-        aud: false,
-        iss: false,
-        sub: false,
-        maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+    }),
+  });
+  await server.register([
+    {
+      plugin: albums,
+      options: {
+        service: albumService,
+        validator: AlbumValidator,
       },
-      validate: (artifacts) => ({
-        isValid: true,
-        credentials: {
-          id: artifacts.decoded.payload.id,
-        },
-      }),
-    });
-    await server.register([
-      {
-        plugin: albums,
-        options: {
-          service: albumService,
-          validator: AlbumValidator,
-        },
+    },
+    {
+      plugin: songs,
+      options: {
+        service: songService,
+        validator: SongValidator,
       },
-      {
-        plugin: songs,
-        options: {
-          service: songService,
-          validator: SongValidator,
-        },
+    },
+    {
+      plugin: users,
+      options: {
+        service: usersService,
+        validator: UsersValidator,
       },
-      {
-        plugin: users,
-        options: {
-          service: usersService,
-          validator: UsersValidator,
-        },
+    },
+    {
+      plugin: authentications,
+      options: {
+        authenticationsService,
+        usersService,
+        tokenManager: TokenManager,
+        validator: AuthenticationsValidator,
       },
-      {
-        plugin: authentications,
-        options: {
-          authenticationsService,
-          usersService,
-          tokenManager: TokenManager,
-          validator: AuthenticationsValidator,
-        },
+    },
+    {
+      plugin: playlists,
+      options: {
+        playlistsService,
+        playlistSongsService,
+        songService,
+        psActivitiesService,
+        validator: PlaylistsValidator,
       },
-      {
-        plugin: playlists,
-        options: {
-          playlistsService,
-          playlistSongsService,
-          songService,
-          psActivitiesService,
-          validator: PlaylistsValidator,
-        },
+    },
+    {
+      plugin: collaborations,
+      options: {
+        playlistsService,
+        collaborationsService,
+        usersService,
+        validator: CollaborationsValidator,
       },
-      {
-        plugin: collaborations,
-        options: {
-          playlistsService,
-          collaborationsService,
-          usersService,
-          validator: CollaborationsValidator,
-        },
-      },
-    ]);
-    await server.start();
-    server.ext('onPreResponse', (request, h) => {
-      const { response } = request;
+    },
+  ]);
+  await server.start();
+  server.ext('onPreResponse', (request, h) => {
+    const { response } = request;
 
-      if (response instanceof ClientError) {
-        const newResponse = h.response({
-          status: 'fail',
-          message: response.message,
-        });
-        newResponse.code(response.statusCode);
-        return newResponse;
-      }
-      return response.continue || response;
-    });
-  } catch (e) {
-    console.error(e);
-  }
+    if (response instanceof ClientError) {
+      const newResponse = h.response({
+        status: 'fail',
+        message: response.message,
+      });
+      newResponse.code(response.statusCode);
+      return newResponse;
+    }
+    return response.continue || response;
+  });
 };
 
 init();
