@@ -6,7 +6,6 @@ const { mapAlbumDBToModel, mapSongDBToModel } = require('../utils/mapDBToModel')
 
 class AlbumService {
   constructor() {
-    /* eslint no-underscore-dangle: 0 */
     this._pool = new Pool();
   }
 
@@ -29,7 +28,7 @@ class AlbumService {
 
   async getAlbumById(id) {
     const query = {
-      text: 'SELECT * FROM albums WHERE id = $1',
+      text: 'SELECT id, name, year, cover FROM albums WHERE id = $1',
       values: [id],
     };
 
@@ -44,15 +43,20 @@ class AlbumService {
       throw new NotFoundError('Album tidak ditemukan');
     }
 
+    const album = {
+      id: albums.rows[0].id,
+      name: albums.rows[0].name,
+      year: albums.rows[0].year,
+      coverUrl: albums.rows[0].cover,
+    };
+
     const songs = await this._pool.query(querySong);
 
-    const result = albums.rows.map(mapAlbumDBToModel)[0];
-
     if (songs.rowCount) {
-      result.songs = songs.rows.map(mapSongDBToModel);
+      album.songs = songs.rows.map(mapSongDBToModel);
     }
 
-    return result;
+    return album;
   }
 
   async editAlbumById(id, { name, year }) {
@@ -80,6 +84,17 @@ class AlbumService {
 
     if (!result.rowCount) {
       throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan');
+    }
+  }
+
+  async addAlbumCoverById(id, cover) {
+    const query = {
+      text: 'UPDATE albums SET cover = $1 WHERE id = $2',
+      values: [cover, id],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new InvariantError('Cover gagal ditambah');
     }
   }
 }

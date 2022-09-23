@@ -1,12 +1,15 @@
 require('dotenv').config();
 
+const path = require('path');
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
+const Inert = require('@hapi/inert');
 
 // albums
 const albums = require('./api/albums');
 const AlbumService = require('./services/AlbumService');
 const AlbumValidator = require('./validator/albums');
+const UploadService = require('./services/UploadService');
 
 // songs
 const songs = require('./api/songs');
@@ -37,6 +40,12 @@ const collaborations = require('./api/collaborations');
 const CollaborationsService = require('./services/CollaborationsService');
 const CollaborationsValidator = require('./validator/collaborations');
 
+const exportPlugin = require('./api/exports');
+const ExportService = require('./services/ExportService');
+const ExportValidator = require('./validator/exports');
+
+const publics = require('./api/public');
+
 const init = async () => {
   const albumService = new AlbumService();
   const songService = new SongService();
@@ -46,6 +55,7 @@ const init = async () => {
   const playlistSongsService = new PlaylistSongsService();
   const collaborationsService = new CollaborationsService();
   const psActivitiesService = new PlaylistSongActivitiesService();
+  const uploadImageService = new UploadService(path.resolve(__dirname, '../public/images'));
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -59,6 +69,9 @@ const init = async () => {
   await server.register([
     {
       plugin: Jwt,
+    },
+    {
+      plugin: Inert,
     },
   ]);
   server.auth.strategy('openmusic_jwt', 'jwt', {
@@ -81,6 +94,7 @@ const init = async () => {
       plugin: albums,
       options: {
         service: albumService,
+        uploadService: uploadImageService,
         validator: AlbumValidator,
       },
     },
@@ -126,11 +140,21 @@ const init = async () => {
         validator: CollaborationsValidator,
       },
     },
+    {
+      plugin: exportPlugin,
+      options: {
+        exportService: ExportService,
+        playlistsService,
+        validator: ExportValidator,
+      },
+    },
+    {
+      plugin: publics,
+    },
   ]);
   await server.start();
   server.ext('onPreResponse', (request, h) => {
     const { response } = request;
-
     if (response instanceof ClientError) {
       const newResponse = h.response({
         status: 'fail',
