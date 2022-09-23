@@ -85,7 +85,6 @@ class AlbumsHandler {
     await this._service.getAlbumById(playlistId);
     const isLiked = await this._service.verifyUserAlbumLike(playlistId, credentialId);
     let message;
-    let code;
     if (!isLiked) {
       await this._service.addAlbumLikeById(playlistId, credentialId);
       message = 'Berhasil menambah like album';
