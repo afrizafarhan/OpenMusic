@@ -28,7 +28,7 @@ class AlbumService {
 
   async getAlbumById(id) {
     const query = {
-      text: 'SELECT id, name, year, cover FROM albums WHERE id = $1',
+      text: 'SELECT * FROM albums WHERE id = $1',
       values: [id],
     };
 
@@ -43,12 +43,7 @@ class AlbumService {
       throw new NotFoundError('Album tidak ditemukan');
     }
 
-    const album = {
-      id: albums.rows[0].id,
-      name: albums.rows[0].name,
-      year: albums.rows[0].year,
-      coverUrl: albums.rows[0].cover,
-    };
+    const album = albums.rows.map(mapAlbumDBToModel);
 
     const songs = await this._pool.query(querySong);
 
@@ -95,6 +90,50 @@ class AlbumService {
     const result = await this._pool.query(query);
     if (!result.rowCount) {
       throw new InvariantError('Cover gagal ditambah');
+    }
+  }
+
+  async getTotalLikeAlbumById(id) {
+    const query = {
+      text: 'SELECT COUNT(id) as likes FROM user_album_likes WHERE album_id = $1',
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new NotFoundError('Album tidak ditemukan');
+    }
+    return parseInt(result.rows[0].likes, 10);
+  }
+
+  async verifyUserAlbumLike(albumId, userId) {
+    const query = {
+      text: 'SELECT * FROM user_album_likes WHERE album_id = $1 AND user_id = $2',
+      values: [albumId, userId],
+    };
+    const result = await this._pool.query(query);
+    return result.rowCount;
+  }
+
+  async addAlbumLikeById(albumId, userId) {
+    const id = `ualikes-${nanoid(16)}`;
+    const query = {
+      text: 'INSERT INTO user_album_likes VALUES($1, $2, $3) RETURNING id',
+      values: [id, userId, albumId],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new InvariantError('Gagal menambahkan like');
+    }
+  }
+
+  async deleteAlbumLikeById(albumId, userId) {
+    const deleteLike = {
+      text: 'DELETE FROM user_album_likes WHERE album_id = $1 AND user_id = $2 RETURNING id',
+      values: [albumId, userId],
+    };
+    const result = await this._pool.query(deleteLike);
+    if (!result.rowCount) {
+      throw new InvariantError('Gagal menghapus like');
     }
   }
 }

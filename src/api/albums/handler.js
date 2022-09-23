@@ -1,11 +1,10 @@
-const path = require('path');
 const autoBind = require('auto-bind');
 
 class AlbumsHandler {
-  constructor(service, uploadService, validator) {
+  constructor(service, storageService, validator) {
     this._service = service;
     this._validator = validator;
-    this._uploadService = uploadService;
+    this._storageService = storageService;
     autoBind(this);
   }
 
@@ -61,12 +60,42 @@ class AlbumsHandler {
   async postAlbumCoverByIdHandler(request, h) {
     const { cover } = request.payload;
     this._validator.validateAlbumCoverPayload(cover.hapi.headers);
-    const fileLocation = await this._uploadService.writeFile(cover, cover.hapi);
+    const fileLocation = await this._storageService.writeFile(cover, cover.hapi);
     await this._service.addAlbumCoverById(request.params.id, fileLocation);
 
     return h.response({
       status: 'success',
       message: 'Sampul berhasil diunggah',
+    }).code(201);
+  }
+
+  async getTotalLikeAlbumByIdHandler(request) {
+    const likes = await this._service.getTotalLikeAlbumById(request.params.id);
+    return {
+      status: 'success',
+      data: {
+        likes,
+      },
+    };
+  }
+
+  async postAlbumUserLikeByIdHandler(request, h) {
+    const { id: credentialId } = request.auth.credentials;
+    const { id: playlistId } = request.params;
+    await this._service.getAlbumById(playlistId);
+    const isLiked = await this._service.verifyUserAlbumLike(playlistId, credentialId);
+    let message;
+    let code;
+    if (!isLiked) {
+      await this._service.addAlbumLikeById(playlistId, credentialId);
+      message = 'Berhasil menambah like album';
+    } else {
+      await this._service.deleteAlbumLikeById(playlistId, credentialId);
+      message = 'Berhasi menghapus like album';
+    }
+    return h.response({
+      status: 'success',
+      message,
     }).code(201);
   }
 }

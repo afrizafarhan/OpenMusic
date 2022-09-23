@@ -1,4 +1,14 @@
-const mapAlbumDBToModel = ({ id, name, year }) => ({ id, name, year });
+const mapAlbumDBToModel = ({
+  id,
+  name,
+  year,
+  cover,
+}) => ({
+  id,
+  name,
+  year,
+  coverUrl: cover,
+});
 const mapSongDBToModel = ({ id, title, performer }) => ({ id, title, performer });
 const mapSongDetailDBToModel = ({
   id,

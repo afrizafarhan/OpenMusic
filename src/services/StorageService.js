@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-class UploadService {
+class StorageService {
   constructor(folder) {
     this._folder = folder;
 
@@ -23,4 +23,4 @@ class UploadService {
   }
 }
 
-module.exports = UploadService;
+module.exports = StorageService;
