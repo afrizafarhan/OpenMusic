@@ -25,16 +25,26 @@ class AlbumsHandler {
     return response;
   }
 
-  async getAlbumByIdHandler(request) {
+  async getAlbumByIdHandler(request, h) {
     const { id } = request.params;
-    const album = await this._service.getAlbumById(id);
-    album.coverUrl = album.coverUrl ? `http://${process.env.HOST}:${process.env.PORT}/public/images/${album.coverUrl}` : album.coverUrl;
-    return {
+    let album = await this._cacheservice.get(`albums:${id}`);
+    if (album === null) {
+      album = await this._service.getAlbumById(id);
+      album.coverUrl = album.coverUrl ? `http://${process.env.HOST}:${process.env.PORT}/public/images/${album.coverUrl}` : album.coverUrl;
+      this._cacheservice.set(`albums:${id}`, JSON.stringify(album));
+      return h.response({
+        status: 'success',
+        data: {
+          album,
+        },
+      });
+    }
+    return h.response({
       status: 'success',
       data: {
-        album,
+        album: JSON.parse(album),
       },
-    };
+    }).header('X-Data-Source', 'cache');
   }
 
   async putAlbumByIdHandler(request) {
@@ -42,6 +52,7 @@ class AlbumsHandler {
     const { id } = request.params;
 
     await this._service.editAlbumById(id, request.payload);
+    this._cacheservice.delete(`albums:${id}`);
 
     return {
       status: 'success',
@@ -52,6 +63,8 @@ class AlbumsHandler {
   async deleteAlbumByIdHandler(request) {
     const { id } = request.params;
     await this._service.deleteAlbumById(id);
+    this._cacheservice.delete(`albums:${id}`);
+
     return {
       status: 'success',
       message: 'Album berhasil dihapus',
@@ -63,6 +76,7 @@ class AlbumsHandler {
     this._validator.validateAlbumCoverPayload(cover.hapi.headers);
     const fileLocation = await this._storageService.writeFile(cover, cover.hapi);
     await this._service.addAlbumCoverById(request.params.id, fileLocation);
+    this._cacheservice.delete(`albums:${request.params.id}`);
 
     return h.response({
       status: 'success',
