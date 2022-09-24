@@ -1,10 +1,11 @@
 const autoBind = require('auto-bind');
 
 class AlbumsHandler {
-  constructor(service, storageService, validator) {
+  constructor(service, storageService, validator, cacheService) {
     this._service = service;
     this._validator = validator;
     this._storageService = storageService;
+    this._cacheservice = cacheService;
     autoBind(this);
   }
 
@@ -69,29 +70,42 @@ class AlbumsHandler {
     }).code(201);
   }
 
-  async getTotalLikeAlbumByIdHandler(request) {
-    const likes = await this._service.getTotalLikeAlbumById(request.params.id);
-    return {
+  async getTotalLikeAlbumByIdHandler(request, h) {
+    const { id: albumId } = request.params;
+    let likes = await this._cacheservice.get(`likes:${albumId}`);
+    if (likes === null) {
+      likes = await this._service.getTotalLikeAlbumById(albumId);
+      this._cacheservice.set(`likes:${albumId}`, likes);
+      return h.response({
+        status: 'success',
+        data: {
+          likes,
+        },
+      });
+    }
+
+    return h.response({
       status: 'success',
       data: {
-        likes,
+        likes: parseInt(likes, 10),
       },
-    };
+    }).header('X-Data-Source', 'cache');
   }
 
   async postAlbumUserLikeByIdHandler(request, h) {
     const { id: credentialId } = request.auth.credentials;
-    const { id: playlistId } = request.params;
-    await this._service.getAlbumById(playlistId);
-    const isLiked = await this._service.verifyUserAlbumLike(playlistId, credentialId);
+    const { id: albumId } = request.params;
+    await this._service.getAlbumById(albumId);
+    const isLiked = await this._service.verifyUserAlbumLike(albumId, credentialId);
     let message;
     if (!isLiked) {
-      await this._service.addAlbumLikeById(playlistId, credentialId);
+      await this._service.addAlbumLikeById(albumId, credentialId);
       message = 'Berhasil menambah like album';
     } else {
-      await this._service.deleteAlbumLikeById(playlistId, credentialId);
+      await this._service.deleteAlbumLikeById(albumId, credentialId);
       message = 'Berhasi menghapus like album';
     }
+    this._cacheservice.delete(`likes:${albumId}`);
     return h.response({
       status: 'success',
       message,
