@@ -1,4 +1,5 @@
 const redis = require('redis');
+const fs = require('fs');
 const config = require('../utils/config');
 
 class CacheService {
@@ -9,8 +10,12 @@ class CacheService {
       },
     });
 
+    if (!fs.existsSync(`${__dirname}/../logs`)) {
+      fs.mkdirSync('logs', { recursive: true });
+    }
+
     this._client.on('error', (error) => {
-      console.error(error);
+      fs.appendFile(`${__dirname}/../logs`, error.message);
     });
 
     this._client.connect();
