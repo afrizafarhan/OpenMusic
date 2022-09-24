@@ -49,8 +49,9 @@ const publics = require('./api/public');
 const CacheService = require('./services/CacheService');
 
 const init = async () => {
+  const cacheService = new CacheService();
   const albumService = new AlbumService();
-  const songService = new SongService();
+  const songService = new SongService(cacheService);
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
   const playlistsService = new PlaylistsService();
@@ -58,7 +59,6 @@ const init = async () => {
   const collaborationsService = new CollaborationsService();
   const psActivitiesService = new PlaylistSongActivitiesService();
   const uploadImageService = new StorageService(path.resolve(__dirname, '../public/images'));
-  const cacheService = new CacheService();
 
   const server = Hapi.server({
     port: process.env.PORT,
