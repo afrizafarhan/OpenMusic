@@ -44,7 +44,7 @@ const exportPlugin = require('./api/exports');
 const ExportService = require('./services/ExportService');
 const ExportValidator = require('./validator/exports');
 
-const publics = require('./api/public');
+const publics = require('./api/publics');
 
 const CacheService = require('./services/CacheService');
 
